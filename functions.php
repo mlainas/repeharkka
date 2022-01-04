@@ -37,7 +37,7 @@ function checkUser(PDO $dbcon, $username, $passwd){
  */
 function createUser(PDO $dbcon, $fname, $lname, $username, $passwd){
 
-    //Sanitoidaan. Lisätty tuntien jälkeen.
+    //Sanitoidaan.
     $fname = filter_var($fname, FILTER_SANITIZE_STRING);
     $lname = filter_var($lname, FILTER_SANITIZE_STRING);
     $username = filter_var($username, FILTER_SANITIZE_STRING);

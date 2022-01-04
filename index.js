@@ -15,7 +15,7 @@ function login(e){
 
     var base64cred = btoa( data.get("username") +":"+data.get("passwd") )
 
-    //authorization: Basic sdkfljsfgklfg
+    
     var params = {
         headers: { 'authorization':'Basic ' + base64cred },
         withCredentials: true,
