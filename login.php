@@ -1,30 +1,26 @@
 <?php
+
+
+session_start();
+
 require('headers.php');
 require('functions.php');
 
-//Tarkistetaan tuleeko palvelimelle basic login tiedot
-if( isset($_SERVER['PHP_AUTH_USER']) ){
-    if(checkUser(createDbConnection(), $_SERVER['PHP_AUTH_USER'],$_SERVER["PHP_AUTH_PW"] )){
+if(isset($_SERVER['PHP_AUTH_USER']) ){
+    if(checkUser(createDbConnection(), $_SERVER['PHP_AUTH_USER'], $_SERVER['PHP_AUTH_PW'] )) {
         $_SESSION["user"] = $_SERVER['PHP_AUTH_USER'];
 
-        
-
-        echo '{"info":"kirjauduit sisään"}';
+        echo "Olet kirjautunut sisään" .' ' .$_SESSION["user"]. '!';
         header('Content-Type: application/json');
         exit;
     }
 }
 
+header('WWW-Authenticate: Basic');
 
-
-
-/* käyttäjälle unauhtorized-otsikko */
-echo '{"info":"Failed to login"}';
-        header('Content-Type: application/json');
-echo "error";
+echo "Virhe kirjautumisessa";
+header('Content-Type: application/json');
 header('HTTP/1.1 401');
+
 exit;
-
-
-
 ?>

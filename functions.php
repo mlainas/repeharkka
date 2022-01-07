@@ -1,16 +1,25 @@
 <?php
 
-/**
- * Tarkistaa onko käyttäjä tietokannassa ja onko salasana validi
- */
-function checkUser(PDO $dbcon, $username, $passwd){
+function openDB(): object {
+    $ini=parse_ini_file("../config.ini", true);
 
-    //Sanitoidaan. Lisätty tuntien jälkeen
+    $host = $ini['host'];
+    $database = $ini['database'];
+    $user = $ini['user'];
+    $password = $ini['password'];
+    $db = new PDO("mysql:host=$host;dbname=$database;charset=utf8",$user,$password);
+    $db->setAttribute(PDO::ATTR_ERRMODE,PDO::ERRMODE_EXCEPTION);
+    return $db;
+}
+
+function checkUser(PDO $dbcon, $username, $password){
+
+
     $username = filter_var($username, FILTER_SANITIZE_STRING);
-    $passwd = filter_var($passwd, FILTER_SANITIZE_STRING);
+    $password = filter_var($password, FILTER_SANITIZE_STRING);
 
     try{
-        $sql = "SELECT password FROM user WHERE username=?";  //komento, arvot parametreina
+        $sql = "SELECT password FROM users WHERE username=?";  //komento, arvot parametreina
         $prepare = $dbcon->prepare($sql);   //valmistellaan
         $prepare->execute(array($username));  //kysely tietokantaan
 
@@ -19,7 +28,7 @@ function checkUser(PDO $dbcon, $username, $passwd){
         //Käydään rivit läpi (max yksi rivi tässä tapauksessa) 
         foreach($rows as $row){
             $pw = $row["password"];  //password sarakkeen tieto (hash salasana tietokannassa)
-            if( password_verify($passwd, $pw) ){  //tarkistetaan salasana tietokannan hashia vasten
+            if( password_verify($password, $pw) ){  //tarkistetaan salasana tietokannan hashia vasten
                 return true;
             }
         }
@@ -35,19 +44,19 @@ function checkUser(PDO $dbcon, $username, $passwd){
 /**
  * Luo tietokantaan uuden käyttäjän ja hashaa salasanan
  */
-function createUser(PDO $dbcon, $fname, $lname, $username, $passwd){
+function createUser(PDO $dbcon, $username, $password, $firstname, $lastname){
 
-    //Sanitoidaan.
-    $fname = filter_var($fname, FILTER_SANITIZE_STRING);
-    $lname = filter_var($lname, FILTER_SANITIZE_STRING);
+
     $username = filter_var($username, FILTER_SANITIZE_STRING);
-    $passwd = filter_var($passwd, FILTER_SANITIZE_STRING);
+    $password = filter_var($password, FILTER_SANITIZE_STRING);
+    $firstname = filter_var($firstname, FILTER_SANITIZE_STRING);
+    $lastname = filter_var($lastname, FILTER_SANITIZE_STRING);
 
     try{
-        $hash_pw = password_hash($passwd, PASSWORD_DEFAULT); //salasanan hash
-        $sql = "INSERT IGNORE INTO user VALUES (?,?,?,?)"; //komento, arvot parametreina
+        $hash_pw = password_hash($password, PASSWORD_DEFAULT); //salasanan hash
+        $sql = "INSERT INTO users VALUES (?,?,?,?)"; //komento, arvot parametreina
         $prepare = $dbcon->prepare($sql); //valmistellaan
-        $prepare->execute(array($fname, $lname, $username, $hash_pw));  //parametrit tietokantaan
+        $prepare->execute(array($username, $hash_pw, $firstname, $lastname));  //parametrit tietokantaan
     }catch(PDOException $e){
         echo '<br>'.$e->getMessage();
     }
@@ -67,27 +76,3 @@ function createDbConnection(){
 
     return $dbcon;
 }
-
-//Tätä koodia käytetty vain tietokantataulun luontiin.
-function createTable(PDO $con){
-    $sql = "CREATE TABLE IF NOT EXISTS user(
-        first_name varchar(50) NOT NULL,
-        last_name varchar(50) NOT NULL,
-        username varchar(50) NOT NULL,
-        password varchar(150) NOT NULL,
-        PRIMARY KEY (username)
-        )";
-
-    try{   
-        $con->exec($sql);  
-    }catch(PDOException $e){
-        echo '<br>'.$e->getMessage();
-    }
-
-    //Luodaan pari käyttäjää tietokantaan
-    createUser($con,'Mikko','Lainas', 'Miku', 'elmiku');
-    createUser($con,'Niko','Nistikko', 'Nipa', 'nipsu');
-    createUser($con,'Mikael','Mahti', 'Mika', 'akim');
-}
-
-?>
